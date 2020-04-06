@@ -2,21 +2,23 @@ namespace PGSTwitter.WebApi
 {
     using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Hosting;
-    using Microsoft.EntityFrameworkCore;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Hosting;
     using Microsoft.OpenApi.Models;
     using Repositories;
-    using Repositories.Implementations;
-    using Repositories.Interfaces;
-    using Services.Implementations;
-    using Services.Interfaces;
     using System;
     using System.IO;
     using System.Reflection;
-
+    using System.Text;
+    using Microsoft.AspNetCore.Authentication.JwtBearer;
+    using Microsoft.AspNetCore.Identity;
+    using Microsoft.EntityFrameworkCore;
+    using Microsoft.IdentityModel.Tokens;
+    using Repositories.Models;
     using Serilog;
+    using Services.Implementations;
+    using Services.Interfaces;
 
     public class Startup
     {
@@ -30,26 +32,60 @@ namespace PGSTwitter.WebApi
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddScoped<ITodoItemsService, TodoItemsService>();
-            services.AddScoped<ITodoItemsMapper, TodoItemsMapper>();
-            services.AddScoped<ITodoItemsRepository, TodoItemsRepository>();
+            services.AddDbContext<ApplicationDbContext>(options =>
+                options.UseSqlServer(Configuration.GetConnectionString("LocalDbDev")));
 
-            services.AddDbContext<TodoContext>(opt => opt.UseInMemoryDatabase("TodoList"));
+            services.AddScoped<IUsersService, UsersService>();
+            services.AddScoped<IUsersMapper, UsersMapper>();
+            services.AddScoped<ITokenService, TokenService>();
+
             services.AddControllers();
+
+            var key = Encoding.ASCII.GetBytes(Configuration["JwtToken:Key"]);
+
+            services.AddAuthentication(options =>
+                    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(options =>
+                {
+                    options.RequireHttpsMetadata = false;
+                    options.SaveToken = true;
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = new SymmetricSecurityKey(key),
+                        ValidateIssuer = false,
+                        ValidateAudience = false
+                    };
+                });
+
+            services.AddIdentity<TwitterUser, IdentityRole>()
+                .AddEntityFrameworkStores<ApplicationDbContext>();
+
+            services.Configure<IdentityOptions>(options =>
+            {
+                options.User.RequireUniqueEmail = true;
+
+                options.Password.RequireDigit = true;
+                options.Password.RequireLowercase = true;
+                options.Password.RequireUppercase = true;
+                options.Password.RequiredUniqueChars = 4;
+                options.Password.RequiredLength = 8;
+
+                options.SignIn.RequireConfirmedEmail = false;
+            });
 
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v0", new OpenApiInfo { Title = "TodoList API", Version = "v0" });
-
-                var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-                c.IncludeXmlComments(xmlPath);
+                c.SwaggerDoc("v0", new OpenApiInfo { Title = "Twitter-API", Version = "pre-serious" });
             });
 
             services.AddSingleton<ILogger>(
                 Log.Logger = new LoggerConfiguration()
                     .ReadFrom.Configuration(Configuration)
                     .CreateLogger());
+
+            // todo: implement AutoMapper
+            // todo: implement AutoFack
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -62,7 +98,7 @@ namespace PGSTwitter.WebApi
                 app.UseSwagger();
                 app.UseSwaggerUI(c =>
                 {
-                    c.SwaggerEndpoint("/swagger/v0/swagger.json", "TodoList API");
+                    c.SwaggerEndpoint("/swagger/pre-serious/swagger.json", "Twitter-API");
                 });
             }
 
@@ -70,6 +106,7 @@ namespace PGSTwitter.WebApi
 
             app.UseRouting();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>

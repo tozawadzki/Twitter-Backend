@@ -20,7 +20,7 @@
     "PGSTwitter.WebApi": {
       "commandName": "Project",
       "launchBrowser": true,
-      "launchUrl": "api/todoitems",
+      "launchUrl": "swagger",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
