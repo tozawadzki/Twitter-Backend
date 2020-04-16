@@ -56,7 +56,6 @@
                 return BadRequest();
             }
 
-
             return Ok(token);
         }
     }

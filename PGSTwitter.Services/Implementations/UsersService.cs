@@ -1,6 +1,7 @@
 ﻿namespace PGSTwitter.Services.Implementations
 {
     using System.Threading.Tasks;
+    using AutoMapper;
     using Interfaces;
     using Microsoft.AspNetCore.Identity;
     using Repositories.Models;
@@ -9,9 +10,9 @@
     public class UsersService : IUsersService
     {
         private readonly UserManager<TwitterUser> _userManager;
-        private readonly IUsersMapper _mapper;
+        private readonly IMapper _mapper;
 
-        public UsersService(UserManager<TwitterUser> userManager, IUsersMapper mapper)
+        public UsersService(UserManager<TwitterUser> userManager, IMapper mapper)
         {
             _userManager = userManager;
             _mapper = mapper;
@@ -31,13 +32,13 @@
                 return null;
             }
 
-            var userDto = _mapper.UserToDto(user);
+            var userDto = _mapper.Map<TwitterUser, UserDTO>(user);
             return userDto;
         }
 
         public async Task<IdentityResult> CreateUser(NewUserDTO newUserDto)
         {
-            var user = _mapper.DtoToUser(newUserDto);
+            var user = _mapper.Map<NewUserDTO, TwitterUser>(newUserDto);
             var result = await _userManager.CreateAsync(user, newUserDto.Password);
             return result;
         }
@@ -45,14 +46,14 @@
         public async Task<UserDTO> FindUserByEmail(string email)
         {
             var user = await _userManager.FindByEmailAsync(email);
-            var userDto = _mapper.UserToDto(user);
+            var userDto = _mapper.Map<TwitterUser, UserDTO>(user);
             return userDto;
         }
 
         public async Task<UserDTO> FindUserById(string id)
         {
             var user = await _userManager.FindByIdAsync(id);
-            var userDto = _mapper.UserToDto(user);
+            var userDto = _mapper.Map<TwitterUser, UserDTO>(user);
             return userDto;
         }
     }

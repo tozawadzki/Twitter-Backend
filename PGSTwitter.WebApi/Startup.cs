@@ -11,6 +11,7 @@ namespace PGSTwitter.WebApi
     using System.IO;
     using System.Reflection;
     using System.Text;
+    using AutoMapper;
     using Microsoft.AspNetCore.Authentication.JwtBearer;
     using Microsoft.AspNetCore.Identity;
     using Microsoft.EntityFrameworkCore;
@@ -19,6 +20,7 @@ namespace PGSTwitter.WebApi
     using Serilog;
     using Services.Implementations;
     using Services.Interfaces;
+    using Services.UserModels;
 
     public class Startup
     {
@@ -36,11 +38,10 @@ namespace PGSTwitter.WebApi
                 options.UseSqlServer(Configuration.GetConnectionString("LocalDbDev")));
 
             services.AddScoped<IUsersService, UsersService>();
-            services.AddScoped<IUsersMapper, UsersMapper>();
             services.AddScoped<ITokenService, TokenService>();
 
             services.AddControllers();
-
+            services.AddCors();
             var key = Encoding.ASCII.GetBytes(Configuration["JwtToken:Key"]);
 
             services.AddAuthentication(options =>
@@ -76,7 +77,7 @@ namespace PGSTwitter.WebApi
 
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v0", new OpenApiInfo { Title = "Twitter-API", Version = "pre-serious" });
+                c.SwaggerDoc("pre-serious", new OpenApiInfo { Title = "Twitter-API", Version = "pre-serious" });
             });
 
             services.AddSingleton<ILogger>(
@@ -84,8 +85,7 @@ namespace PGSTwitter.WebApi
                     .ReadFrom.Configuration(Configuration)
                     .CreateLogger());
 
-            // todo: implement AutoMapper
-            // todo: implement AutoFack
+            services.AddAutoMapper(typeof(UserMappingProfile));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -94,13 +94,19 @@ namespace PGSTwitter.WebApi
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-
-                app.UseSwagger();
-                app.UseSwaggerUI(c =>
-                {
-                    c.SwaggerEndpoint("/swagger/pre-serious/swagger.json", "Twitter-API");
-                });
             }
+
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/pre-serious/swagger.json", "Twitter-API");
+            });
+
+            app.UseCors(builder => builder
+                .AllowAnyOrigin()
+                .AllowAnyMethod()
+                .AllowAnyHeader()
+            );
 
             app.UseHttpsRedirection();
 
