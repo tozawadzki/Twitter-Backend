@@ -9,5 +9,7 @@
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options): base(options)
         {
         }
+
+        public DbSet<Tweet> Tweets { set; get; }
     }
 }

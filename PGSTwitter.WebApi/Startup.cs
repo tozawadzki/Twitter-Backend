@@ -16,10 +16,13 @@ namespace PGSTwitter.WebApi
     using Microsoft.AspNetCore.Identity;
     using Microsoft.EntityFrameworkCore;
     using Microsoft.IdentityModel.Tokens;
+    using Repositories.Implementations;
+    using Repositories.Interfaces;
     using Repositories.Models;
     using Serilog;
     using Services.Implementations;
     using Services.Interfaces;
+    using Services.TweetModels;
     using Services.UserModels;
 
     public class Startup
@@ -39,6 +42,8 @@ namespace PGSTwitter.WebApi
 
             services.AddScoped<IUsersService, UsersService>();
             services.AddScoped<ITokenService, TokenService>();
+            services.AddScoped<ITweetsService, TweetsService>();
+            services.AddScoped<ITweetsRepository, TweetsRepository>();
 
             services.AddControllers();
             services.AddCors();
@@ -86,6 +91,7 @@ namespace PGSTwitter.WebApi
                     .CreateLogger());
 
             services.AddAutoMapper(typeof(UserMappingProfile));
+            services.AddAutoMapper(typeof(TweetMappingProfile));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
