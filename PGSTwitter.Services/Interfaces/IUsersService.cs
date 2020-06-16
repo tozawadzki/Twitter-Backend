@@ -2,13 +2,13 @@
 {
     using System.Threading.Tasks;
     using Microsoft.AspNetCore.Identity;
-    using UserModels;
+    using Models;
 
     public interface IUsersService
     {
-        Task<UserDTO> AuthenticateUser(LoginDataDTO loginDataDto);
-        Task<IdentityResult> CreateUser(NewUserDTO newUserDto);
-        Task<UserDTO> FindUserByEmail(string email);
-        Task<UserDTO> FindUserById(string id);
+        Task<UserInfoResponse> AuthenticateUser(UserLoginRequest loginDataDto);
+        Task<IdentityResult> CreateUser(UserCreateRequest newUserDto);
+        Task<UserInfoResponse> FindUserByEmail(string email);
+        Task<UserInfoResponse> FindUserById(string id);
     }
 }

@@ -6,7 +6,7 @@
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Mvc;
     using Services.Interfaces;
-    using Services.UserModels;
+    using Services.Models;
 
     [ApiController]
     [Route("api/[controller]")]
@@ -25,7 +25,7 @@
         [HttpPost]
         [Route("new")]
         [AllowAnonymous]
-        public async Task<IActionResult> CreateUser(NewUserDTO newUserDto)
+        public async Task<IActionResult> CreateUser(UserCreateRequest newUserDto)
         {
             var result = await _usersService.CreateUser(newUserDto);
             if (!result.Succeeded)
@@ -48,7 +48,7 @@
         [HttpPost]
         [Route("authenticate")]
         [AllowAnonymous]
-        public async Task<IActionResult> GetToken(LoginDataDTO loginDataDto)
+        public async Task<IActionResult> GetToken(UserLoginRequest loginDataDto)
         {
             var token = await _tokenService.GetToken(loginDataDto);
             if (token == null)

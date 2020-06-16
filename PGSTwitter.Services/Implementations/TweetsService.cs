@@ -6,9 +6,9 @@
     using System.Threading.Tasks;
     using AutoMapper;
     using Interfaces;
+    using Models;
     using Repositories.Interfaces;
     using Repositories.Models;
-    using TweetModels;
 
     public class TweetsService : ITweetsService
     {
@@ -21,80 +21,80 @@
             _mapper = mapper;
         }
 
-        public async Task<TweetsServiceResult<TweetDTO>> CreateTweet(NewTweetDTO newTweetDto,
-            string userId)
+        public async Task<TweetResponse> CreateTweet(
+            TweetRequest tweetRequest, string userId)
         {
-            var tweet = _mapper.Map<NewTweetDTO, Tweet>(newTweetDto);
+            var tweet = _mapper.Map<TweetRequest, Tweet>(tweetRequest);
             tweet.UserID = userId;
             tweet.CreationDate = DateTime.UtcNow;
             tweet.LastTimeOfEdit = tweet.CreationDate;
 
             await _tweetsRepository.CreateTweet(tweet);
 
-            var tweetDto = _mapper.Map<Tweet, TweetDTO>(tweet);
-            return (Status.Success, tweetDto);
+            var tweetDto = _mapper.Map<Tweet, TweetResponse>(tweet);
+            return tweetDto;
         }
 
-        public async Task<TweetsServiceResult<TweetDTO>> GetTweet(int id)
+        public async Task<TweetResponse> GetTweet(int id)
         {
             var tweet = await _tweetsRepository.GetTweet(id);
 
             if (tweet == null)
             {
-                return Status.TweetNotFound;
+                return null;
             }
 
-            var tweetDto = _mapper.Map<Tweet, TweetDTO>(tweet);
-            return (Status.Success, tweetDto);
+            var tweetDto = _mapper.Map<Tweet, TweetResponse>(tweet);
+            return tweetDto;
         }
 
-        public async Task<TweetsServiceResult<IEnumerable<TweetDTO>>> GetTweets()
+        public async Task<IEnumerable<TweetResponse>> GetTweets()
         {
             var tweets = await _tweetsRepository.GetTweets();
             var tweetsDtos = tweets
-                .Select(t => _mapper.Map<Tweet, TweetDTO>(t));
+                .Select(t => _mapper.Map<Tweet, TweetResponse>(t));
 
-            return (Status.Success, tweetsDtos);
+            return tweetsDtos;
         }
 
-        public async Task<TweetsServiceResult> UpdateTweet(int id, NewTweetDTO updatedTweetDto,
-            string userId)
+        public async Task<ServiceStatus> UpdateTweet(int id,
+            TweetRequest updatedTweetRequest, string userId)
         {
             var tweet = await _tweetsRepository.GetTweet(id);
 
             if (tweet == null)
             {
-                return Status.TweetNotFound;
+                return ServiceStatus.NotFound;
             }
 
             if (!tweet.UserID.Equals(userId))
             {
-                return Status.UserNotMatched;
+                return ServiceStatus.UnauthorizedAction;
             }
 
-            tweet.TweetContent = updatedTweetDto.Content;
+            tweet.TweetContent = updatedTweetRequest.Content;
             tweet.LastTimeOfEdit = DateTime.UtcNow;
             await _tweetsRepository.UpdateTweet(tweet.ID, tweet);
 
-            return Status.Success;
+            return ServiceStatus.Success;
         }
 
-        public async Task<TweetsServiceResult> DeleteTweet(int id, string userId)
+        public async Task<ServiceStatus> DeleteTweet(int id, string userId)
         {
             var tweet = await _tweetsRepository.GetTweet(id);
 
             if (tweet == null)
             {
-                return Status.TweetNotFound;
+                return ServiceStatus.NotFound;
             }
 
             if (!tweet.UserID.Equals(userId))
             {
-                return Status.UserNotMatched;
+                return ServiceStatus.UnauthorizedAction;
             }
 
             await _tweetsRepository.DeleteTweet(id);
-            return Status.Success;
+            return ServiceStatus.Success;
         }
     }
 }

@@ -4,8 +4,8 @@
     using AutoMapper;
     using Interfaces;
     using Microsoft.AspNetCore.Identity;
+    using Models;
     using Repositories.Models;
-    using UserModels;
 
     public class UsersService : IUsersService
     {
@@ -18,7 +18,7 @@
             _mapper = mapper;
         }
 
-        public async Task<UserDTO> AuthenticateUser(LoginDataDTO loginDataDto)
+        public async Task<UserInfoResponse> AuthenticateUser(UserLoginRequest loginDataDto)
         {
             var user = await _userManager.FindByEmailAsync(loginDataDto.Email);
             if (user == null)
@@ -32,28 +32,28 @@
                 return null;
             }
 
-            var userDto = _mapper.Map<TwitterUser, UserDTO>(user);
+            var userDto = _mapper.Map<TwitterUser, UserInfoResponse>(user);
             return userDto;
         }
 
-        public async Task<IdentityResult> CreateUser(NewUserDTO newUserDto)
+        public async Task<IdentityResult> CreateUser(UserCreateRequest newUserDto)
         {
-            var user = _mapper.Map<NewUserDTO, TwitterUser>(newUserDto);
+            var user = _mapper.Map<UserCreateRequest, TwitterUser>(newUserDto);
             var result = await _userManager.CreateAsync(user, newUserDto.Password);
             return result;
         }
 
-        public async Task<UserDTO> FindUserByEmail(string email)
+        public async Task<UserInfoResponse> FindUserByEmail(string email)
         {
             var user = await _userManager.FindByEmailAsync(email);
-            var userDto = _mapper.Map<TwitterUser, UserDTO>(user);
+            var userDto = _mapper.Map<TwitterUser, UserInfoResponse>(user);
             return userDto;
         }
 
-        public async Task<UserDTO> FindUserById(string id)
+        public async Task<UserInfoResponse> FindUserById(string id)
         {
             var user = await _userManager.FindByIdAsync(id);
-            var userDto = _mapper.Map<TwitterUser, UserDTO>(user);
+            var userDto = _mapper.Map<TwitterUser, UserInfoResponse>(user);
             return userDto;
         }
     }

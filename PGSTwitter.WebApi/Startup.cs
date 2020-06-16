@@ -7,9 +7,6 @@ namespace PGSTwitter.WebApi
     using Microsoft.Extensions.Hosting;
     using Microsoft.OpenApi.Models;
     using Repositories;
-    using System;
-    using System.IO;
-    using System.Reflection;
     using System.Text;
     using AutoMapper;
     using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -20,10 +17,9 @@ namespace PGSTwitter.WebApi
     using Repositories.Interfaces;
     using Repositories.Models;
     using Serilog;
+    using Services;
     using Services.Implementations;
     using Services.Interfaces;
-    using Services.TweetModels;
-    using Services.UserModels;
 
     public class Startup
     {
@@ -38,7 +34,7 @@ namespace PGSTwitter.WebApi
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlServer(Configuration.GetConnectionString("LocalDbDev")));
+                options.UseSqlServer(Configuration.GetConnectionString("AzureDB")));
 
             services.AddScoped<IUsersService, UsersService>();
             services.AddScoped<ITokenService, TokenService>();
@@ -60,7 +56,8 @@ namespace PGSTwitter.WebApi
                         ValidateIssuerSigningKey = true,
                         IssuerSigningKey = new SymmetricSecurityKey(key),
                         ValidateIssuer = false,
-                        ValidateAudience = false
+                        ValidateAudience = false,
+                        RequireExpirationTime = true
                     };
                 });
 
@@ -90,8 +87,7 @@ namespace PGSTwitter.WebApi
                     .ReadFrom.Configuration(Configuration)
                     .CreateLogger());
 
-            services.AddAutoMapper(typeof(UserMappingProfile));
-            services.AddAutoMapper(typeof(TweetMappingProfile));
+            services.AddAutoMapper(typeof(MappingProfile));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

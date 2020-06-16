@@ -6,8 +6,9 @@
     using Microsoft.AspNetCore.Authentication.JwtBearer;
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Mvc;
+    using Services;
     using Services.Interfaces;
-    using Services.TweetModels;
+    using Services.Models;
 
     [ApiController]
     [Route("api/[controller]")]
@@ -24,53 +25,43 @@
         [HttpGet]
         public async Task<IActionResult> GetTweets()
         {
-            var result = await _tweetsService.GetTweets();
-
-            return result.Status switch
-            {
-                Status.Success => Ok(result.Object),
-                _ => throw new ArgumentOutOfRangeException()
-            };
+            var tweets = await _tweetsService.GetTweets();
+            return Ok(tweets);
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetTweet(int id)
         {
-            var result = await _tweetsService.GetTweet(id);
-
-            return result.Status switch
+            var tweet = await _tweetsService.GetTweet(id);
+            if (tweet == null)
             {
-                Status.Success => Ok(result.Object),
-                Status.TweetNotFound => NotFound(),
-                _ => throw new ArgumentOutOfRangeException()
-            };
+                return NotFound();
+            }
+
+            return Ok(tweet);
         }
 
         [HttpPost("new")]
-        public async Task<IActionResult> CreateTweet(NewTweetDTO newTweetDto)
+        public async Task<IActionResult> CreateTweet(TweetRequest tweetRequest)
         {
-            var result = await _tweetsService
-                .CreateTweet(newTweetDto, User.GetId());
+            var createdTweet = await _tweetsService
+                .CreateTweet(tweetRequest, User.GetId());
 
-            return result.Status switch
-            {
-                Status.Success => CreatedAtAction(nameof(GetTweet),
-                    new { id = result.Object.Id },
-                    result.Object),
-                _ => throw new ArgumentOutOfRangeException()
-            };
+            return CreatedAtAction(nameof(GetTweet),
+                new { id = createdTweet.Id },
+                createdTweet);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateTweet(int id, NewTweetDTO updatedTweetDto)
+        public async Task<IActionResult> UpdateTweet(int id, TweetRequest updatedTweetRequest)
         {
-            var result = await _tweetsService.UpdateTweet(id, updatedTweetDto, User.GetId());
+            var actionResult = await _tweetsService.UpdateTweet(id, updatedTweetRequest, User.GetId());
 
-            return result.Status switch
+            return actionResult switch
             {
-                Status.Success => Ok(),
-                Status.TweetNotFound => BadRequest(),
-                Status.UserNotMatched => Unauthorized(),
+                ServiceStatus.Success => NoContent(),
+                ServiceStatus.NotFound => BadRequest(),
+                ServiceStatus.UnauthorizedAction => Unauthorized(),
                 _ => throw new ArgumentOutOfRangeException()
             };
         }
@@ -78,13 +69,13 @@
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteTweet(int id)
         {
-            var result = await _tweetsService.DeleteTweet(id, User.GetId());
+            var actionResult = await _tweetsService.DeleteTweet(id, User.GetId());
 
-            return result.Status switch
+            return actionResult switch
             {
-                Status.Success => Ok(),
-                Status.TweetNotFound => BadRequest(),
-                Status.UserNotMatched => Unauthorized(),
+                ServiceStatus.Success => NoContent(),
+                ServiceStatus.NotFound => BadRequest(),
+                ServiceStatus.UnauthorizedAction => Unauthorized(),
                 _ => throw new ArgumentOutOfRangeException()
             };
         }

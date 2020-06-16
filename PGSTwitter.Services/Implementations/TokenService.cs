@@ -9,8 +9,8 @@
     using Microsoft.AspNetCore.Identity;
     using Microsoft.Extensions.Configuration;
     using Microsoft.IdentityModel.Tokens;
+    using Models;
     using Repositories.Models;
-    using UserModels;
 
     public class TokenService : ITokenService
     {
@@ -23,7 +23,7 @@
             _configuration = configuration;
         }
 
-        public async Task<string> GetToken(LoginDataDTO loginDataDto)
+        public async Task<string> GetToken(UserLoginRequest loginDataDto)
         {
             var user = await _userManager.FindByEmailAsync(loginDataDto.Email);
             if (user == null)
